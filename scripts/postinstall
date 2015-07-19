@@ -47,7 +47,6 @@ def set_defaults(data, domain):
     data for.
     '''
     for k, v in data.items():
-        print('DATA!!! %s -> %s' % (k, v))  # TODO: REMOVE ME
         CoreFoundation.CFPreferencesSetAppValue(k, v, domain)
         CoreFoundation.CFPreferencesAppSynchronize(domain)
 
@@ -93,8 +92,6 @@ def main():
         console_user)
     if rc == 0:
         print('Successfully added TMNotifier password for %s!' % console_user)
-    print('DEFAULTS: %s.' % defaults)  # TODO: REMOVE ME
-    print('SMTP_PASSWORD: %s.' % smtp_password)  # TODO: REMOVE ME
 
 
 if __name__ == '__main__':
