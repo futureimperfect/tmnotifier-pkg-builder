@@ -1,4 +1,4 @@
-# TMNotifier PKG Scripts
+# TMNotifier PKG Build Scripts
 
 These scripts can be used to build a custom [TMNotifier][1] PKG for deployment within your organization. Just place the TMNotifier.app bundle in `build/Applications` and then run the `create_pkg` script.
 
