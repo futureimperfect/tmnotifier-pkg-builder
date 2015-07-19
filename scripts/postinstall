@@ -1,0 +1,101 @@
+#!/usr/bin/python
+
+import CoreFoundation
+import os
+import shlex
+import subprocess
+
+from ConfigParser import SafeConfigParser
+
+KEYCHAIN_SERVICE_NAME = 'TMNotifier Email Password'
+PREFERENCE_DOMAIN = 'com.everythingisgray.TMNotifier'
+DEFAULTS_KEYS = (
+    'ErrorCheckInterval',
+    'ErrorCheckIntervalUnit',
+    'HideWelcomeWindowOnLaunch',
+    'PresentedConsent',
+    'SMTPAuthenticationEnabled',
+    'SMTPFrom',
+    'SMTPServer',
+    'SMTPTo',
+    'SMTPUsername',
+    'displayStyle'
+)
+
+
+def get_console_user():
+    '''
+    :returns: The currently logged in user as a string.
+    '''
+    if os.geteuid() == 0:
+        console_user = subprocess.check_output(['/usr/bin/stat',
+                                                '-f%Su',
+                                                '/dev/console']).strip()
+    else:
+        import getpass
+        console_user = getpass.getuser()
+
+    return console_user
+
+
+def set_defaults(data, domain):
+    '''
+    :param data: A dictionary containing the key-value
+    pairs that should be written to the preference domain.
+
+    :param domain: The reverse domain to set the preference
+    data for.
+    '''
+    for k, v in data.items():
+        print('DATA!!! %s -> %s' % (k, v))  # TODO: REMOVE ME
+        CoreFoundation.CFPreferencesSetAppValue(k, v, domain)
+        CoreFoundation.CFPreferencesAppSynchronize(domain)
+
+
+def add_generic_password(smtp_username, smtp_password, user):
+    '''
+    :param smtp_username: The SMTP username used in the Keychain item.
+    :param smtp_password: The SMTP password used in the Keychain item.
+    :param user: The user whose Keychain we should add the item to.
+
+    :returns: The exit status from the `security` shell command.
+    '''
+    cmd = '/usr/bin/security add-generic-password -a %s -s "%s" -w %s -A /Users/%s/Library/Keychains/login.keychain' % (
+        smtp_username, KEYCHAIN_SERVICE_NAME, smtp_password, user)
+    cmd = shlex.split(cmd)
+    rc = subprocess.check_call(cmd)
+    return rc
+
+
+def main():
+    console_user = get_console_user()
+    config_parser = SafeConfigParser()
+    config_parser.read('config.ini')
+    defaults = {}
+    for key in DEFAULTS_KEYS:
+        val = config_parser.get('tmnotifier', key)
+        if key == 'SMTPTo' and ',' in val:
+            val = val.split(',')
+        elif key in ['ErrorCheckIntervalUnit',
+                     'ErrorCheckInterval',
+                     'displayStyle'] and val.isdigit():
+            val = int(val)
+        elif key in ['HideWelcomeWindowOnLaunch',
+                     'PresentedConsent',
+                     'SMTPAuthenticationEnabled'] and isinstance(val, str):
+            val = True if val.lower() == 'true' else False
+        defaults[key] = val
+    smtp_password = config_parser.get('tmnotifier', 'smtppassword')
+    set_defaults(defaults, PREFERENCE_DOMAIN)
+    rc = add_generic_password(
+        defaults.get('SMTPUsername'),
+        smtp_password,
+        console_user)
+    if rc == 0:
+        print('Successfully added TMNotifier password for %s!' % console_user)
+    print('DEFAULTS: %s.' % defaults)  # TODO: REMOVE ME
+    print('SMTP_PASSWORD: %s.' % smtp_password)  # TODO: REMOVE ME
+
+
+if __name__ == '__main__':
+    main()

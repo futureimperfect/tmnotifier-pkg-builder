@@ -1,0 +1,154 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import subprocess
+
+from ConfigParser import SafeConfigParser
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Create deployment PKG for TMNotifier.'
+    )
+    parser.add_argument(
+        '-i',
+        '--interval',
+        default=30,
+        help='How often TMNotifier should check for errors.'
+    )
+    parser.add_argument(
+        '-o',
+        '--hours',
+        action='store_true',
+        help='Use hours instead of minutes as the interval unit.'
+    )
+    parser.add_argument(
+        '-w',
+        '--hide-welcome-window',
+        action='store_true',
+        help='Hide the TMNotifier "Welcome" window on launch.'
+    )
+    parser.add_argument(
+        '-l',
+        '--launch-at-login',
+        action='store_true',
+        help='Authorize TMNotifier to launch at login.'
+    )
+    parser.add_argument(
+        '-a',
+        '--smtp-authentication-enabled',
+        action='store_true',
+        help='Whether to use SMTP authentication.'
+    )
+    parser.add_argument(
+        '-f',
+        '--smtp-from',
+        help='The email to send TMNotifier alerts from.'
+    )
+    parser.add_argument(
+        '-s',
+        '--smtp-server',
+        help='The SMTP server to send alerts from.'
+    )
+    parser.add_argument(
+        '-t',
+        '--smtp-to',
+        action='append',
+        help='''The email address(es) to send the alerts to.
+              This option can be used multiple times for
+              additional email addresses.'''
+    )
+    parser.add_argument(
+        '-u',
+        '--smtp-username',
+        help='''The SMTP username used for sending email
+              notifications in TMNotifier.'''
+    )
+    parser.add_argument(
+        '-d',
+        '--display-style',
+        default=1,
+        help='''Configure TMNotifier\'s display options.
+              1 = Menu bar only
+              2 = Dock icon only
+              3 = Menu bar + Dock icon'''
+    )
+    parser.add_argument(
+        '-p',
+        '--smtp-password',
+        help='''The SMTP password used for sending email
+              notifications in TMNotifier.'''
+    )
+    args = parser.parse_args()
+
+    config_path = os.path.join(os.path.dirname(__file__), 'scripts/config.ini')
+    needs_config_file = True
+    if os.path.isfile(config_path):
+        rem = raw_input(
+            '%s already exists. Overwrite with new options? [y/n]: ' %
+            config_path)
+        if rem.strip().lower().startswith('y'):
+            os.remove(config_path)
+            print('Removed %s. Recreating with new options.' % config_path)
+        else:
+            print(
+                'Using existing config file at %s to build the PKG.' %
+                config_path)
+            needs_config_file = False
+
+    if needs_config_file:
+        config_parser = SafeConfigParser()
+        config_parser.read(config_path)
+        config_parser.add_section('tmnotifier')
+        unit = 1 if args.hours else 0
+        config_parser.set(
+            'tmnotifier',
+            'ErrorCheckIntervalUnit',
+            str(unit))
+        smtp_to = ','.join(
+            args.smtp_to) if isinstance(
+            args.smtp_to,
+            list) else args.smtp_to
+        config_parser.set('tmnotifier', 'SMTPTo', smtp_to)
+        config_parser.set(
+            'tmnotifier', 'ErrorCheckInterval', str(
+                args.interval))
+        config_parser.set('tmnotifier', 'SMTPFrom', args.smtp_from)
+        config_parser.set('tmnotifier', 'SMTPServer', args.smtp_server)
+        config_parser.set('tmnotifier', 'SMTPUsername', args.smtp_username)
+        config_parser.set(
+            'tmnotifier', 'displayStyle', str(
+                args.display_style))
+        config_parser.set('tmnotifier', 'SMTPPassword', args.smtp_password)
+        config_parser.set(
+            'tmnotifier',
+            'HideWelcomeWindowOnLaunch',
+            str(args.hide_welcome_window)
+        )
+        config_parser.set(
+            'tmnotifier',
+            'PresentedConsent',
+            str(args.launch_at_login)
+        )
+        config_parser.set(
+            'tmnotifier',
+            'SMTPAuthenticationEnabled',
+            str(args.smtp_authentication_enabled)
+        )
+        with open(config_path, 'w') as f:
+            config_parser.write(f)
+
+    # Build the PKG.
+    output = subprocess.check_output('deployment/pkg_build.sh')
+    success_str = 'pkgbuild: Wrote package to'
+    if success_str in output:
+        for line in output.split('\n'):
+            if line.strip().startswith(success_str):
+                pkg_path = line[len(success_str):].strip()
+                print('Success! Wrote PKG to %s.' % pkg_path)
+                break
+
+
+if __name__ == '__main__':
+    main()
