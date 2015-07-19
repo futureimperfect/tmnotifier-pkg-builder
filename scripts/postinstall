@@ -48,7 +48,8 @@ def set_defaults(data, domain):
     '''
     for k, v in data.items():
         CoreFoundation.CFPreferencesSetAppValue(k, v, domain)
-        CoreFoundation.CFPreferencesAppSynchronize(domain)
+
+    CoreFoundation.CFPreferencesAppSynchronize(domain)
 
 
 def add_generic_password(smtp_username, smtp_password, user):

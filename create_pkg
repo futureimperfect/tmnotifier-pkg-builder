@@ -140,7 +140,8 @@ def main():
             config_parser.write(f)
 
     # Build the PKG.
-    output = subprocess.check_output('deployment/pkg_build.sh')
+    pkg_build_path = os.path.join(os.path.dirname(__file__), 'deployment/pkg_build.sh')
+    output = subprocess.check_output(pkg_build_path)
     success_str = 'pkgbuild: Wrote package to'
     if success_str in output:
         for line in output.split('\n'):
