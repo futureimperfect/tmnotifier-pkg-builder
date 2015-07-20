@@ -4,10 +4,10 @@ These scripts can be used to build a custom [TMNotifier][1] PKG for deployment w
 
 ## Usage
 
-`./create_pkg -i 3 -o -a -w -l -f 'smtp@example.com' -s 'smtp.example.com' -t 'one@example.com' -t 'two@example.com' -u 'smtp@example.com' -p 'supersecret'`
+`./create_pkg -i 3 -o -a -e -w -l -f 'smtp@example.com' -s 'smtp.example.com' -t 'one@example.com' -t 'two@example.com' -u 'smtp@example.com' -p 'supersecret'`
 
     usage: create_pkg [-h] [-i INTERVAL] [-o] [-w] [-l] [-a] [-f SMTP_FROM]
-                      [-s SMTP_SERVER] [-t SMTP_TO] [-u SMTP_USERNAME]
+                      [-s SMTP_SERVER] [-e] [-t SMTP_TO] [-u SMTP_USERNAME]
                       [-d DISPLAY_STYLE] [-p SMTP_PASSWORD]
 
     Create deployment PKG for TMNotifier.
@@ -27,6 +27,8 @@ These scripts can be used to build a custom [TMNotifier][1] PKG for deployment w
                             The email to send TMNotifier alerts from.
       -s SMTP_SERVER, --smtp-server SMTP_SERVER
                             The SMTP server to send alerts from.
+      -e, --smtp-tls-enabled
+                            Whether the SMTP server uses TLS (SSL).
       -t SMTP_TO, --smtp-to SMTP_TO
                             The email address(es) to send the alerts to. This
                             option can be used multiple times for additional email

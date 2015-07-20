@@ -52,6 +52,12 @@ def main():
         help='The SMTP server to send alerts from.'
     )
     parser.add_argument(
+        '-e',
+        '--smtp-tls-enabled',
+        action='store_true',
+        help='Whether the SMTP server uses TLS (SSL).'
+    )
+    parser.add_argument(
         '-t',
         '--smtp-to',
         action='append',
@@ -106,6 +112,9 @@ def main():
             'tmnotifier',
             'ErrorCheckIntervalUnit',
             str(unit))
+        config_parser.set(
+            'tmnotifier', 'SMTPTLSEnabled', str(
+                args.smtp_tls_enabled))
         smtp_to = ','.join(
             args.smtp_to) if isinstance(
             args.smtp_to,
@@ -140,7 +149,9 @@ def main():
             config_parser.write(f)
 
     # Build the PKG.
-    pkg_build_path = os.path.join(os.path.dirname(__file__), 'deployment/pkg_build.sh')
+    pkg_build_path = os.path.join(
+        os.path.dirname(__file__),
+        'deployment/pkg_build.sh')
     output = subprocess.check_output(pkg_build_path)
     success_str = 'pkgbuild: Wrote package to'
     if success_str in output:

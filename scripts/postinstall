@@ -17,6 +17,7 @@ DEFAULTS_KEYS = (
     'SMTPAuthenticationEnabled',
     'SMTPFrom',
     'SMTPServer',
+    'SMTPTLSEnabled',
     'SMTPTo',
     'SMTPUsername',
     'displayStyle'
@@ -76,13 +77,16 @@ def main():
         val = config_parser.get('tmnotifier', key)
         if key == 'SMTPTo' and ',' in val:
             val = val.split(',')
+        elif key == 'SMTPAuthenticationEnabled':
+            val = True if val.lower() == 'true' else False
+            val = 1 if val else 0
         elif key in ['ErrorCheckIntervalUnit',
                      'ErrorCheckInterval',
                      'displayStyle'] and val.isdigit():
             val = int(val)
         elif key in ['HideWelcomeWindowOnLaunch',
                      'PresentedConsent',
-                     'SMTPAuthenticationEnabled'] and isinstance(val, str):
+                     'SMTPTLSEnabled'] and isinstance(val, str):
             val = True if val.lower() == 'true' else False
         defaults[key] = val
     smtp_password = config_parser.get('tmnotifier', 'smtppassword')
